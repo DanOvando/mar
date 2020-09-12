@@ -755,6 +755,8 @@ neg_price_offshore <- simmar(fauna = fauna,
                   fleets = fleets,
                   years = years)
 
+hist(a)
+
 proc_offshore_neg_price <- process_marlin(neg_price_offshore, time_step =  fauna[[1]]$time_step)
 ```
 

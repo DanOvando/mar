@@ -168,6 +168,8 @@ List sim_fish(
       
       double colsum = 1e-6; // seriously annoying step since I can't figure out how to do colsums of a matrix
       
+      double colsum2 = 1e-6;
+      
       for (int pp = 0; pp <patches; pp++){
         
         
@@ -183,17 +185,26 @@ List sim_fish(
         
       } // close inner patch loop
       
-      
+      // seriously ugly here but works until I can figure out how to subset and sum columns in rcppeigen
       for (int pp = 0; pp<patches; pp++){
         
         density_gradient(pp,p)  =   density_gradient(pp,p) / colsum; // normalize each column to sum to 1
         
+        movement(pp,p) = movement(pp,p) +  density_gradient(pp,p); // weighting would go here
+          
+        colsum2 += movement(pp,p); // calculate colsums of updated movement matrix
+          
+      }
+      
+      for (int pp = 0; pp<patches; pp++){
+        
+        movement(pp,p) = movement(pp,p) /  colsum2; // normalize each column of the updated movement matrix
+          
       }
       
     } // close outer patch loop
     
-    
-    
+
   } // close if dd_movement statement
   
   
