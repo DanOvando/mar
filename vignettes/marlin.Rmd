@@ -89,7 +89,8 @@ fauna <-
       rec_form = 1, # recruitment form, where 1 implies local recruitment
       seasons = seasons,
       init_explt = 0.12, 
-      explt_type = "f"
+      explt_type = "f",
+      dd_movement = 1
       ),
     "Shortfin Mako" = create_critter(
       scientific_name = "Isurus oxyrinchus",
@@ -102,7 +103,8 @@ fauna <-
       burn_years = 200,
       seasons = seasons,
       init_explt = .12, 
-      explt_type = "f"
+      explt_type = "f",
+      dd_movement = 1
     )
   )
 
@@ -713,7 +715,8 @@ fauna <-
       burn_years = 200,
       seasons = seasons,
       init_explt = .12, 
-      explt_type = "f"
+      explt_type = "f",
+      dd_movement = 1
     )
   )
 

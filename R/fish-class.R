@@ -93,7 +93,7 @@ Fish <- R6::R6Class(
                           mat_mode = "age",
                           default_wb = 2.8,
                           tune_weight = FALSE,
-                          density_movement_modifier = 1,
+                          dd_movement = 0,
                           linf_buffer = 1.2,
                           resolution = 25,
                           seasonal_habitat = list(),
@@ -473,6 +473,7 @@ Fish <- R6::R6Class(
       
       self$movement_seasons <- habitat_seasons
       
+      self$dd_movement <- dd_movement
       
       # set up unfished recruitment by patch
       if (is.null(dim(rec_habitat))) {
@@ -560,11 +561,11 @@ Fish <- R6::R6Class(
         f_p_a = f_p_a,
         seasonal_movement = self$seasonal_movement,
         movement_seasons = self$movement_seasons,
+        dd_movement = self$dd_movement,
         last_n_p_a = init_pop,
         tune_unfished = 1,
         rec_form = rec_form
       )
-      
       self$ssb0 <- unfished$ssb0
       
       self$ssb0_p <- unfished$ssb0_p
@@ -626,7 +627,6 @@ Fish <- R6::R6Class(
         if (is.null(last_n_p_a)) {
           last_n_p_a <- self$n_p_a_0
         }
-        
         pop <- marlin::sim_fish(
           length_at_age = self$length_at_age,
           weight_at_age = self$weight_at_age,
@@ -642,6 +642,7 @@ Fish <- R6::R6Class(
           ssb0_p = self$ssb0_p,
           seasonal_movement = self$seasonal_movement,
           movement_seasons = self$movement_seasons,
+          dd_movement = self$dd_movement,
           f_p_a = f_p_a,
           last_n_p_a = last_n_p_a,
           tune_unfished = tune_unfished,

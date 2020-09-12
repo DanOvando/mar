@@ -27,6 +27,7 @@ List sim_fish(
     const NumericMatrix f_p_a, // fishing mortality by patch and age
     const List seasonal_movement,
     const List movement_seasons,
+    bool dd_movement,
     Rcpp::NumericMatrix last_n_p_a, // last numbers by patch and age
     const int patches,
     const int burn_steps, // number of burn steps if burn is in effect
@@ -54,6 +55,8 @@ List sim_fish(
   NumericMatrix c_p_a(patches, ages); // catch at age 
 
   Eigen::MatrixXd movement = Eigen::MatrixXd::Zero(patches, patches);
+
+  Eigen::MatrixXd density_gradient = Eigen::MatrixXd::Zero(patches, patches);
   
   //////////////////// tune things ////////////////////////
   NumericMatrix tmp_n_p_a = clone(last_n_p_a);
@@ -78,6 +81,11 @@ List sim_fish(
     
   } // close seasonal movement finder loop
   
+  
+  // tune unfished conditions
+  
+  
+  
   if (Rcpp::traits::is_na<REALSXP>(ssb0) == 1){ // basically, if is.na(ssb0), tune unfished conditions
 
     NumericVector burn_seq = cpp_seq(burn_steps,time_step);
@@ -100,6 +108,7 @@ List sim_fish(
         f_p_a,
         seasonal_movement,
         movement_seasons,
+        dd_movement,
         tmp_n_p_a,
         patches,
         0,
@@ -129,6 +138,66 @@ List sim_fish(
   //////////////////// move ////////////////////////
 
 
+  //// apply density-dependent movement as needed ////
+  
+  
+  // you need a p by p matrix with the relative ssb in each patch relative to the source patch in each column,
+  // such that the sum of each column is 1
+  
+  // compare headroom in each patch
+  
+  if (tune_unfished == 0 &&  dd_movement == 1){
+    
+    double ssb_source = 0;
+    
+    double ssb_dest = 0;
+    
+    double space_source = 0;
+    
+    double space_dest = 0;
+    
+    double tmp_delta;
+    
+    for (int p = 0; p <patches; p++){
+      
+      ssb_source = sum(last_n_p_a(p,_) * weight_at_age * maturity_at_age); // calculate ssb in the source patch
+      
+      tmp_delta = ssb0_p(p) - ssb_source; // calculate headroom in the source patch
+      
+      space_source = std::max(tmp_delta, 0.0); // make sure headroom is positive, where more headroom less incentive to move
+      
+      double colsum = 1e-6; // seriously annoying step since I can't figure out how to do colsums of a matrix
+      
+      for (int pp = 0; pp <patches; pp++){
+        
+        
+        ssb_dest= sum(last_n_p_a(pp,_) * weight_at_age * maturity_at_age); // calculate ssb in the destination patch
+        
+        tmp_delta = ssb0_p(pp) - ssb_dest; // calculate headroom in the destination patch
+        
+        space_dest = std::max(tmp_delta,0.0);
+        
+        density_gradient(pp,p) = std::max(space_dest - space_source,0.0); // compare headroom, such that if both places are full, no incentive to move, bigger headroom gradient, more incentive to move
+        
+        colsum += density_gradient(pp,p);
+        
+      } // close inner patch loop
+      
+      
+      for (int pp = 0; pp<patches; pp++){
+        
+        density_gradient(pp,p)  =   density_gradient(pp,p) / colsum; // normalize each column to sum to 1
+        
+      }
+      
+    } // close outer patch loop
+    
+    
+    
+  } // close if dd_movement statement
+  
+  
+  
   // tmpmat =  tmpmat.transpose() * movement; // matrix multiplication of numbers at age by movement matrix
 
   tmpmat =  movement * tmpmat; // matrix multiplication of numbers at age by movement matrix
@@ -225,6 +294,7 @@ List sim_fish(
     Rcpp::Named("ssb0") = ssb0,
     Rcpp::Named("ssb0_p") = ssb0_p,
     Rcpp::Named("tmppop") = tmppop,
-    Rcpp::Named("c_p_a") = c_p_a);
+    Rcpp::Named("c_p_a") = c_p_a,
+    Rcpp::Named("dd_gradient") = density_gradient);
 } // close fish model
 
